@@ -1,30 +1,53 @@
 {
-  "name": "dashboard",
-  "version": "0.1.0",
-  "private": true,
+  "name": "ratecard-agent-workflow",
+  "version": "1.0.0",
+  "description": "Multi-agent AI workflow for automated rate card lifecycle management",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "build": "tsc",
+    "dev": "tsx src/server.ts",
+    "server": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:setup": "psql -f src/database/schema.sql",
+    "lint": "tsc --noEmit"
   },
+  "keywords": [
+    "ratecard",
+    "agentic",
+    "workflow",
+    "claude",
+    "automation"
+  ],
+  "license": "MIT",
   "dependencies": {
-    "clsx": "^2.1.1",
-    "framer-motion": "^12.38.0",
-    "lucide-react": "^1.14.0",
-    "next": "16.2.6",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "tailwind-merge": "^3.6.0"
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@types/mongodb": "^4.0.6",
+    "@types/pdfkit": "^0.17.6",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
+    "express": "^5.2.1",
+    "groq-sdk": "^1.2.0",
+    "mongodb": "^7.2.0",
+    "multer": "^2.1.1",
+    "pdf-parse": "^1.1.1",
+    "pdfkit": "^0.18.0",
+    "pg": "^8.13.1",
+    "puppeteer": "^24.43.1",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^22.10.0",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/pg": "^8.11.10",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
   }
 }
