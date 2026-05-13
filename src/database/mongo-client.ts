@@ -1,4 +1,4 @@
-import { MongoClient, Db, Collection } from 'mongodb';
+import { MongoClient, Db, Collection, Document } from 'mongodb';
 import { WorkflowState } from '../agents/types';
 import { createLogger } from '../utils/logger';
 
@@ -25,7 +25,7 @@ export async function getMongoClient(): Promise<{ client: MongoClient; db: Db }>
       
       logger.info('🍃 Connected to MongoDB Atlas');
     } catch (error) {
-      logger.error('❌ MongoDB Connection Error:', (error as Error).message);
+      logger.error('❌ MongoDB Connection Error', { data: { error: (error as Error).message } });
       throw error;
     }
   }

@@ -416,6 +416,12 @@ export interface WorkflowConfig {
   changeReason: string;
   currentRateCardId?: string;
   currentRateCardData?: Record<string, unknown>[];
+  validationRules?: {
+    requireOrigins?: boolean;
+    requireDestinations?: boolean;
+    requireRates?: boolean;
+    requireDates?: boolean;
+  };
 }
 
 // -------------------------------------------
