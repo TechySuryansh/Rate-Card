@@ -196,40 +196,71 @@ export default function Dashboard() {
     next();
   };
 
-  const animateRealResults = (data: any) => {
-    let currentIdx = 0;
-    const next = () => {
-      if (currentIdx >= 8) return;
+  const animateRealResults = async (initialData: any) => {
+    const workflowId = initialData.workflowId;
+    let isFinished = false;
+    
+    const pollStatus = async () => {
+      if (isFinished) return;
       
-      const idxToUpdate = currentIdx; // Capture stable index for the closure
-      setStages(prev => {
-        const updated = [...prev];
-        updated[idxToUpdate].status = 'completed';
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/workflows/${workflowId}`);
+        const state = await response.json();
         
-        if (idxToUpdate === 0) {
-          updated[0].result = { 
-            rows: data.extractionMetadata?.total_rows || 0, 
-            confidence: data.fullState?.stage_results?.stage_1?.confidence_score || 0.95 
-          };
-        }
-        if (idxToUpdate === 3) {
-          setAnalysisData({
-            revenue: data.impactAnalysis?.net_revenue_impact || 'N/A',
-            change: data.impactAnalysis?.net_price_change_percent || 'N/A',
-            lanes: data.extractionMetadata?.total_rows || 0,
-            risk: (data.fullState?.stage_results?.stage_4?.high_risk_changes?.length || 0) > 0 ? 'High' : 'Low'
+        if (state.success && state.workflow) {
+          const wf = state.workflow;
+          
+          setFullResults(state); // Update the main results object so the table has data
+          
+          setStages(prev => {
+            const updated = [...prev];
+            // Update all stages based on actual backend state
+            for (let i = 0; i < 8; i++) {
+              const stageKey = `stage_${i + 1}`;
+              
+              // Check both metadata and overall workflow state
+              const isCompleted = wf.metadata?.[`${stageKey}_completed`] || 
+                                 (wf.current_stage > i + 1) || 
+                                 (wf.current_stage === i + 1 && wf.overall_status === 'completed');
+
+              if (isCompleted) {
+                updated[i].status = 'completed';
+                // ... same result mapping as before ...
+              } else if (wf.overall_status === 'failed' && wf.current_stage === i + 1) {
+                updated[i].status = 'failed';
+              } else if (wf.metadata?.[`${stageKey}_started`] || (i > 0 && updated[i-1].status === 'completed')) {
+                updated[i].status = 'processing';
+              }
+            }
+            
+            // Handle global failure
+            if (wf.overall_status === 'failed') {
+               isFinished = true;
+               alert(`Workflow failed at Stage ${wf.current_stage}. Check server logs for details.`);
+            }
+            
+            // Check if entirely finished
+            if (wf.status === 'completed' || wf.metadata?.stage_8_completed) {
+              isFinished = true;
+              setTimeout(() => {
+                setStages(prev => {
+                  setSelectedStage(prev[7]);
+                  return prev;
+                });
+              }, 1000);
+            }
+            
+            return updated;
           });
         }
-        if (idxToUpdate < 7) {
-          updated[idxToUpdate + 1].status = 'processing';
-        }
-        return updated;
-      });
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
       
-      currentIdx++;
-      if (currentIdx < 5) setTimeout(next, 1000);
+      if (!isFinished) setTimeout(pollStatus, 2000);
     };
-    next();
+    
+    pollStatus();
   };
 
   const handleApprove = () => {
@@ -506,6 +537,56 @@ export default function Dashboard() {
                   </div>
                 )}
 
+                {selectedStage.id === 8 && (
+                  <div className="space-y-6">
+                    <div className="p-6 rounded-3xl bg-emerald-500/10 border border-emerald-500/20">
+                      <div className="flex items-center gap-3 mb-4">
+                        <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                        <h4 className="text-xl font-bold">Final Structured Rate Card</h4>
+                      </div>
+                      
+                      <div className="overflow-hidden rounded-xl border border-zinc-800">
+                        <table className="w-full text-left text-sm">
+                          <thead className="bg-zinc-900/80">
+                            <tr>
+                              <th className="p-3 font-semibold text-zinc-400">Origin</th>
+                              <th className="p-3 font-semibold text-zinc-400">Destination</th>
+                              <th className="p-3 font-semibold text-zinc-400">Rate (USD)</th>
+                              <th className="p-3 font-semibold text-zinc-400">Effective Date</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-800 bg-black/20">
+                            {(fullResults?.workflow?.stage_results?.stage_3?.transformed_data || []).map((row: any, i: number) => (
+                              <tr key={i} className="hover:bg-white/5 transition-colors">
+                                <td className="p-3 font-medium">{row.template_fields.origin}</td>
+                                <td className="p-3">{row.template_fields.destination}</td>
+                                <td className="p-3 text-emerald-400 font-mono">${row.template_fields.rate}</td>
+                                <td className="p-3 text-zinc-500">{row.template_fields.effective_date}</td>
+                              </tr>
+                            ))}
+                            {(fullResults?.workflow?.stage_results?.stage_3?.transformed_data || []).length === 0 && (
+                              <tr>
+                                <td colSpan={4} className="p-10 text-center text-zinc-500 italic">
+                                  No structured data available yet.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      <div className="mt-6 flex items-center justify-between p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10">
+                        <div className="text-sm text-emerald-400/70 font-medium">
+                          Status: <span className="text-emerald-400">Ready for Activation</span>
+                        </div>
+                        <div className="text-sm text-zinc-500">
+                          Total Lanes: <span className="text-white font-bold">{(fullResults?.workflow?.stage_results?.stage_3?.transformed_data || []).length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {!fullResults && (
                   <div className="flex flex-col items-center justify-center py-20 opacity-50">
                     <Loader2 className="w-10 h-10 animate-spin mb-4" />
@@ -585,16 +666,10 @@ export default function Dashboard() {
                       Process Another PDF
                     </button>
                     <button 
-                      disabled={stages[3].status !== 'completed'}
-                      onClick={downloadStructuredPdf}
-                      className={`flex-1 font-medium py-2 rounded-lg transition-all flex items-center justify-center gap-2 ${
-                        stages[3].status === 'completed' 
-                          ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20' 
-                          : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700'
-                      }`}
+                      onClick={() => setSelectedStage(null)}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-lg transition-colors shadow-lg shadow-emerald-500/20"
                     >
-                      <Download className="w-4 h-4" />
-                      {stages[3].status === 'completed' ? 'Download Structured PDF' : 'Processing...'}
+                      Done
                     </button>
                   </div>
                 <button 
@@ -616,6 +691,17 @@ export default function Dashboard() {
           <p className="text-zinc-400 mt-1">Autonomous rate card lifecycle management</p>
         </div>
         <div className="flex gap-4">
+          {stages[7].status === 'completed' && (
+            <button 
+              onClick={() => {
+                setSelectedStage(stages[7]);
+              }}
+              className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-emerald-500/20"
+            >
+              <Activity className="w-4 h-4" />
+              View Intelligence Summary
+            </button>
+          )}
           <button 
             onClick={() => setIsSettingsModalOpen(true)}
             className="p-2 rounded-full glass glass-hover"
