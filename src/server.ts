@@ -63,6 +63,21 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       clientName: req.body.clientName || 'Acme Logistics',
       carrierName: req.body.carrierName || 'Global Freight Corp',
       pdfFilePath: req.file.path,
+      clientContactEmail: 'info@acme.com',
+      clientContactName: 'Acme Admin',
+      approvalAuthority: 'Operations Manager',
+      approvalDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      targetActivationDate: new Date().toISOString(),
+      expectedCurrency: 'USD',
+      industry: 'Logistics',
+      rateRangeMin: 0,
+      rateRangeMax: 10000,
+      validationRules: {
+        requireOrigins: true,
+        requireDestinations: true,
+        requireRates: true,
+        requireDates: true
+      }
     };
 
     console.log(`🚀 API: Starting workflow for ${config.clientName}...`);
@@ -91,7 +106,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     console.error('❌ API Error:', error.message);
     res.status(500).json({ 
       success: false, 
-      error: error.message,
+      data: { error: error.message },
       stage: error.stage,
       workflowId: error.workflowId 
     });

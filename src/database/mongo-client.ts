@@ -54,7 +54,7 @@ export async function mongoCreateWorkflow(state: WorkflowState): Promise<void> {
       updated_at: new Date(),
     });
   } catch (error) {
-    logger.warn('Failed to persist workflow to MongoDB', { error: (error as Error).message });
+    logger.warn('Failed to persist workflow to MongoDB', { data: { error: (error as Error).message } });
   }
 }
 
@@ -93,7 +93,7 @@ export async function mongoUpdateWorkflow(workflowId: string, update: Partial<Wo
       updateObj
     );
   } catch (error) {
-    logger.warn('Failed to update workflow in MongoDB', { error: (error as Error).message });
+    logger.warn('Failed to update workflow in MongoDB', { data: { error: (error as Error).message } });
   }
 }
 
@@ -103,7 +103,7 @@ export async function mongoGetWorkflow(workflowId: string): Promise<WorkflowStat
     const doc = await col.findOne({ _id: workflowId as any });
     return doc as unknown as WorkflowState;
   } catch (error) {
-    logger.warn('Failed to fetch workflow from MongoDB', { error: (error as Error).message });
+    logger.warn('Failed to fetch workflow from MongoDB', { data: { error: (error as Error).message } });
     return null;
   }
 }

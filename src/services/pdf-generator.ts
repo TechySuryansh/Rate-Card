@@ -20,17 +20,17 @@ export async function generateStructuredPdf(state: WorkflowState, outputPath: st
     // Compile data for the report
     const reportData = {
       workflow_id: state.workflow_id,
-      client_name: state.config?.clientName || 'N/A',
-      carrier_name: state.config?.carrierName || 'N/A',
-      effective_date: state.config?.targetActivationDate || new Date().toLocaleDateString(),
+      client_name: state.client || 'N/A',
+      carrier_name: state.carrier || 'N/A',
+      effective_date: new Date().toLocaleDateString(),
       raw_data: state.stage_results?.stage_1?.extracted_data?.rows || [],
       cleaned_data: state.stage_results?.stage_2?.cleaned_data || [],
       template_data: state.stage_results?.stage_3?.transformed_data || [],
       impact_analysis: state.stage_results?.stage_4 || {},
       audit_trail: state.audit_trail || [],
       approvals: state.stage_results?.stage_6?.response_received ? [{
-        approver_name: state.config?.clientContactName || 'Authorized Signatory',
-        approver_email: state.config?.clientContactEmail || 'N/A',
+        approver_name: 'Authorized Signatory',
+        approver_email: 'N/A',
         approval_type: state.stage_results.stage_6.response_type,
         approval_date: state.metadata?.stage_6_completed || new Date().toISOString()
       }] : []
@@ -41,7 +41,7 @@ export async function generateStructuredPdf(state: WorkflowState, outputPath: st
     
     // Set content and wait for it to be ready
     await page.setContent(html, {
-      waitUntil: 'networkidle0'
+      waitUntil: 'load'
     });
     
     // Generate PDF with professional settings
