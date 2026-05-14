@@ -18,12 +18,22 @@ class AIExplainer:
         prompt = f"Explain to a manager why finding {issue_count} issues and applying {len(corrections)} corrections like {corrections} is important for data integrity."
         return self._call_ai(prompt)
 
-    def explain_impact(self, total_delta, risk_level):
+    def explain_impact(self, total_delta: float, risk_level: str) -> str:
         """Explains the business impact of the rate changes."""
         if self.is_mock:
             return f"Financial risk is {risk_level}. The projected cost change is ${total_delta}. This represents a strategic shift in carrier pricing for your primary routes."
         
-        prompt = f"Provide a brief business impact analysis for a rate card change of ${total_delta} with a {risk_level} risk level. Focus on budget implications."
+        prompt = f"The new rate card has a total cost delta of ${total_delta:,.2f} with a risk level of '{risk_level}'. Explain the business impact and what the procurement team should do in 3 sentences."
+        return self._call_ai(prompt)
+
+    def summarize_content(self, data_sample: list) -> str:
+        """Generates a professional synopsis of the extracted PDF content."""
+        prompt = f"""
+        Provide a professional 2-sentence synopsis of this rate card data:
+        Data Sample: {json.dumps(data_sample)}
+        
+        Focus on identifying the carrier (if possible), the primary regions covered, and the overall service type (e.g., domestic road, international air).
+        """
         return self._call_ai(prompt)
 
     def get_approval_recommendation(self, summary_data):
@@ -36,8 +46,9 @@ class AIExplainer:
 
     def _call_ai(self, prompt):
         try:
+            model_name = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
             response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model=model_name,
                 messages=[{"role": "system", "content": "You are a professional logistics and procurement analyst."},
                           {"role": "user", "content": prompt}],
                 max_tokens=200

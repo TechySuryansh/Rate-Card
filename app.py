@@ -130,7 +130,6 @@ def main():
                             # 1. Extraction (or Direct Read if CSV)
                             st.write("🕵️‍♂️ Extraction Agent: Processing data...")
                             if uploaded_file.name.endswith('.csv'):
-                                # If CSV, use the saved path directly as extraction output
                                 extract_result = {"status": "success", "extraction_path": saved_path, "total_rows": "N/A (CSV)"}
                                 st.success("CSV detected: Bypassing PDF extraction.")
                             else:
@@ -139,28 +138,37 @@ def main():
                                     st.error(f"Extraction Failed: {extract_result.get('error')}")
                                     st.stop()
                                 st.success(f"Extracted {extract_result.get('total_rows', 0)} lanes.")
-                            
-                            # 2. Validation
-                            st.write("🛡️ Validation Agent: Checking for anomalies...")
-                            val_result = validation_agent(extract_result['extraction_path'])
-                            if val_result['status'] == "error":
-                                st.error(f"Validation Failed: {val_result.get('error')}")
-                                st.stop()
-                            st.success(f"Validation: {val_result['status']}")
-                            
-                            # 3. Comparison
-                            st.write("⚖️ Comparison Agent: Calculating price deltas...")
-                            comp_result = comparison_agent(val_result['cleaned_csv_path'])
-                            if comp_result['status'] != "success":
-                                st.error(f"Comparison Failed: {comp_result.get('error')}")
-                                st.stop()
-                            
-                            # 4. Impact Analysis
-                            st.write("💰 Impact Analysis: Evaluating financial risk...")
-                            impact_result = impact_agent(comp_result['comparison_csv_path'])
-                            if impact_result['status'] != "success":
-                                st.error(f"Impact Analysis Failed: {impact_result.get('error')}")
-                                st.stop()
+                                
+                            # 2. Validation (Skip if text-only)
+                            if extract_result.get('is_text_only'):
+                                st.info("📜 Document detected as text-only. Skipping validation and comparison.")
+                                val_result = {"status": "skipped", "cleaned_csv_path": None, "summary": {"total_issues": 0, "corrections": []}}
+                                comp_result = {"status": "skipped", "summary": {"average_percent_change": 0}}
+                                impact_result = {"status": "success", "summary": {"executive_summary": "Text-only document. Analysis based on general content."}}
+                            else:
+                                st.write("🛡️ Validation Agent: Checking for anomalies...")
+                                val_result = validation_agent(extract_result['extraction_path'])
+                                if val_result['status'] == "error":
+                                    st.error(f"Validation Failed: {val_result.get('error')}")
+                                    st.stop()
+                                st.success(f"Validation: {val_result['status']}")
+                                
+                                # 3. Comparison
+                                st.write("⚖️ Comparison Agent: Calculating price deltas...")
+                                comp_result = comparison_agent(val_result['cleaned_csv_path'])
+                                
+                                # Handle "Not Comparable" case gracefully
+                                if comp_result['status'] != "success":
+                                    st.warning(f"⚠️ **Comparison Notice:** {comp_result.get('error')}")
+                                    comp_result = {"status": "skipped", "summary": {"average_percent_change": 0}, "error": comp_result.get('error')}
+                                    impact_result = {"status": "skipped", "summary": {"executive_summary": "Comparison skipped due to no matching lanes."}}
+                                else:
+                                    # 4. Impact Analysis
+                                    st.write("💰 Impact Analysis: Evaluating financial risk...")
+                                    impact_result = impact_agent(comp_result['comparison_csv_path'])
+                                    if impact_result['status'] != "success":
+                                        st.error(f"Impact Analysis Failed: {impact_result.get('error')}")
+                                        st.stop()
                             
                             # Store in session state for Approval Center
                             st.session_state.latest_results = {
@@ -171,6 +179,22 @@ def main():
                             }
                             
                             status.update(label="✅ Analysis Complete!", state="complete", expanded=False)
+                        
+                        # NEW: High-Visibility AI Content Synopsis
+                        if "latest_results" in st.session_state:
+                            st.markdown("---")
+                            st.subheader("🤖 AI Intelligence Briefing")
+                            from utils.ai_explainer import explainer
+                            results = st.session_state.latest_results
+                            sample_data = results['extraction'].get('sample_data', [])
+                            content_summary = explainer.summarize_content(sample_data)
+                            st.info(content_summary)
+                            
+                            # If comparison was skipped, show the explanation here too
+                            if results['comparison'].get('status') == "skipped":
+                                st.warning(f"💡 **Note:** Direct price comparison was skipped because: *{results['comparison'].get('error', 'No matching lanes found.')}*")
+                            
+                            st.markdown("---")
                         
                         st.balloons()
                         st.info("💡 Analysis finished! Head to the **📜 Approval Center** to review and activate.")
@@ -243,54 +267,86 @@ def main():
             
         results = st.session_state.latest_results
         
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            st.subheader("📄 Extracted Rate Data")
-            # Load and show the cleaned data
-            cleaned_df = pd.read_csv(results['validation']['cleaned_csv_path'])
-            st.dataframe(cleaned_df, use_container_width=True)
-            
-            st.subheader("⚖️ Price Comparison & Deltas")
-            # Load and show comparison results
-            compare_df = pd.read_csv(results['comparison']['comparison_csv_path'])
-            # Filter to show only relevant changes
-            delta_df = compare_df[compare_df['change_type'] != 'No Change']
-            st.dataframe(delta_df, use_container_width=True)
-            
-        with col2:
-            st.subheader("🛡️ AI Validation Insight")
+        # Adaptive Layout: Check if meaningful data exists
+        is_text_only = results['extraction'].get('is_text_only', False)
+        
+        if is_text_only:
+            st.info("📜 **Business Document Detected:** This file is text-focused. Providing AI Business Synopsis below.")
+            st.markdown("---")
             from utils.ai_explainer import explainer
-            # Get actual counts from validation summary
-            v_summary = results['validation']['summary']
-            st.info(explainer.explain_validation(v_summary['total_issues'], v_summary['corrections']))
-            
+            sample_data = results['extraction'].get('sample_data', [])
+            full_summary = explainer.summarize_content(sample_data)
+            st.subheader("🤖 AI Business Synopsis")
+            st.info(full_summary)
             st.markdown("---")
-            st.subheader("💰 Strategic Impact")
-            st.markdown('<div class="status-box">', unsafe_allow_html=True)
+        else:
+            # Load and check structured data
+            cleaned_df = pd.read_csv(results['validation']['cleaned_csv_path'])
+            has_real_lanes = 'origin' in cleaned_df.columns and 'destination' in cleaned_df.columns
+            has_rows = len(cleaned_df) > 0
             
-            impact = results['impact']['summary']
-            f_metrics = impact['financial_metrics']
-            risk = impact['risk_analysis']
-            
-            st.metric("Total Cost Delta", f"${f_metrics['total_projected_delta']:,.2f}", 
-                      "High Risk" if risk['impact_level'] == "High" else "Stable")
-            
-            st.write("**AI Business Analysis:**")
-            st.write(impact['executive_summary'])
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            st.markdown("---")
-            st.subheader("✍️ Decision Center")
-            # Use real data for recommendation
-            avg_change = results['comparison']['summary']['average_percent_change']
-            st.success(f"🤖 **{explainer.get_approval_recommendation(f'{avg_change:.1f}% average price change detected.')}**")
-            
-            if st.button("✅ Approve & Activate"):
-                st.balloons()
-                st.success("Rates Activated!")
-                # Logic to call activation_agent would go here
-            if st.button("❌ Reject Card"):
-                st.error("Card Rejected.")
+            if not has_real_lanes or not has_rows:
+                st.info("📜 **Business Document Detected:** Providing AI Business Synopsis below.")
+                st.markdown("---")
+                from utils.ai_explainer import explainer
+                sample_data = results['extraction'].get('sample_data', [])
+                full_summary = explainer.summarize_content(sample_data)
+                st.subheader("🤖 AI Business Synopsis")
+                st.info(full_summary)
+                st.markdown("---")
+            else:
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    st.subheader("📄 Extracted Rate Data")
+                    st.dataframe(cleaned_df, use_container_width=True)
+                    
+                    st.subheader("⚖️ Price Comparison & Deltas")
+                    if 'comparison_csv_path' in results['comparison']:
+                        compare_df = pd.read_csv(results['comparison']['comparison_csv_path'])
+                        delta_df = compare_df[compare_df['change_type'] != 'No Change']
+                        if not delta_df.empty:
+                            st.dataframe(delta_df, use_container_width=True)
+                        else:
+                            st.success("✅ No price changes detected in this card.")
+                    else:
+                        st.warning("⚖️ **Comparison Skipped:** No matching lanes were found for a delta report.")
+                
+                with col2:
+                    st.subheader("🛡️ AI Validation Insight")
+                    from utils.ai_explainer import explainer
+                    v_summary = results['validation']['summary']
+                    st.info(explainer.explain_validation(v_summary['total_issues'], v_summary['corrections']))
+                    
+                    st.markdown("---")
+                    st.subheader("💰 Strategic Impact")
+                    st.markdown('<div class="status-box">', unsafe_allow_html=True)
+                    
+                    impact = results['impact']['summary']
+                    
+                    if 'financial_metrics' in impact:
+                        f_metrics = impact['financial_metrics']
+                        risk = impact['risk_analysis']
+                        st.metric("Total Cost Delta", f"${f_metrics['total_projected_delta']:,.2f}", 
+                                  "High Risk" if risk['impact_level'] == "High" else "Stable")
+                    else:
+                        st.metric("Total Cost Delta", "N/A", "No Matching Lanes")
+                    
+                    st.write("**AI Business Analysis:**")
+                    st.write(impact.get('executive_summary', 'No analysis available for this card.'))
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    st.subheader("✍️ Decision Center")
+                    comp_summary = results['comparison'].get('summary', {})
+                    avg_change = comp_summary.get('average_percent_change', 0)
+                    st.success(f"🤖 **{explainer.get_approval_recommendation(f'{avg_change:.1f}% average price change detected.')}**")
+                
+                if st.button("✅ Approve & Activate"):
+                    st.balloons()
+                    st.success("Rates Activated!")
+                    # Logic to call activation_agent would go here
+                if st.button("❌ Reject Card"):
+                    st.error("Card Rejected.")
 
     elif "Settings" in page:
         st.title("⚙️ System Configuration")
@@ -303,7 +359,7 @@ def main():
             st.text_input("Groq API Key", type="password", value=os.getenv("GROQ_API_KEY", ""))
             st.text_input("OpenAI API Key", type="password", value=os.getenv("OPENAI_API_KEY", ""))
         with col2:
-            st.selectbox("Default Intelligence Model", ["llama-3.1-70b-versatile", "gpt-4-turbo", "gpt-3.5-turbo"])
+            st.selectbox("Default Intelligence Model", ["llama-3.3-70b-versatile", "gpt-4-turbo", "gpt-3.5-turbo"])
             st.checkbox("Enable MOCK_MODE for testing", value=False)
 
         st.markdown("---")

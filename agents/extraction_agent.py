@@ -1,4 +1,3 @@
-# pyrefly: ignore [missing-import]
 import pdfplumber
 import pandas as pd
 import os
@@ -7,13 +6,8 @@ from datetime import datetime
 
 def extraction_agent(pdf_path: str):
     """
-    Stage 1 Agent: Extracts tables from PDF and converts them to structured data.
-    
-    Args:
-        pdf_path (str): Path to the uploaded PDF file.
-        
-    Returns:
-        dict: A dictionary containing extraction status, saved file path, and sample data.
+    Stage 1 Agent: Extracts tables OR raw text from PDF.
+    Ensures that every PDF gets summarized regardless of structure.
     """
     print(f"🕵️‍♂️ Extraction Agent starting for: {pdf_path}")
     
@@ -23,61 +17,67 @@ def extraction_agent(pdf_path: str):
         os.makedirs(output_dir)
         
     try:
-        all_tables = []
+        all_data = []
+        raw_text_content = ""
         
-        # Open the PDF and extract tables
         with pdfplumber.open(pdf_path) as pdf:
-            for page_num, page in enumerate(pdf.pages):
-                tables = page.extract_tables()
-                for table in tables:
-                    if table:
-                        # Convert to DataFrame
-                        df = pd.DataFrame(table[1:], columns=table[0])
-                        
-                        # Data Cleaning: Remove empty rows and columns
-                        df = df.dropna(how='all').dropna(axis=1, how='all')
-                        
-                        if not df.empty:
-                            all_tables.append(df)
+            for page in pdf.pages:
+                # Strategy 1: Explicit Tables
+                table = page.extract_table()
+                
+                # Strategy 2: Text Clusters
+                if not table:
+                    table = page.extract_table({
+                        "vertical_strategy": "text", 
+                        "horizontal_strategy": "text",
+                        "snap_tolerance": 3
+                    })
+                
+                if table:
+                    for row in table:
+                        if any(cell for cell in row if cell):
+                            all_data.append([str(cell).strip() if cell else "" for cell in row])
+                
+                # Always capture some raw text for the summary fallback
+                page_text = page.extract_text()
+                if page_text:
+                    raw_text_content += page_text + "\n"
         
-        if not all_tables:
-            return {
-                "status": "failed",
-                "error": "No tables found in the PDF document."
-            }
+        # If we have table data, process it
+        if all_data:
+            df = pd.DataFrame(all_data[1:], columns=all_data[0])
+            df.columns = [str(c).strip() for c in df.columns]
             
-        # Combine all tables (assuming similar structure for this demo)
-        combined_df = pd.concat(all_tables, ignore_index=True)
-        
-        # Generate output filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        base_name = os.path.basename(pdf_path).replace(".pdf", "")
-        csv_filename = f"{base_name}_extracted_{timestamp}.csv"
-        csv_path = os.path.join(output_dir, csv_filename)
-        
-        # Save to CSV
-        combined_df.to_csv(csv_path, index=False)
-        
-        # Return structured JSON compatible with LangGraph state
-        return {
-            "status": "success",
-            "extraction_path": csv_path,
-            "total_rows": len(combined_df),
-            "columns": list(combined_df.columns),
-            "sample_data": combined_df.head(5).to_dict(orient='records'),
-            "timestamp": datetime.now().isoformat()
-        }
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_name = os.path.basename(pdf_path).replace(".pdf", "")
+            csv_path = os.path.join(output_dir, f"{base_name}_extracted_{timestamp}.csv")
+            df.to_csv(csv_path, index=False)
+            
+            return {
+                "status": "success",
+                "extraction_path": csv_path,
+                "total_rows": len(df),
+                "columns": list(df.columns),
+                "sample_data": df.head(5).to_dict(orient='records'),
+                "raw_text_snippet": raw_text_content[:2000], # Pass text for summary
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            # Fallback: No tables, but we have text!
+            return {
+                "status": "success",
+                "extraction_path": None,
+                "total_rows": 0,
+                "columns": [],
+                "sample_data": [{"content": raw_text_content[:1000]}], # Pass text as data for AI summary
+                "raw_text_snippet": raw_text_content[:2000],
+                "is_text_only": True,
+                "timestamp": datetime.now().isoformat()
+            }
         
     except Exception as e:
         print(f"❌ Extraction Error: {str(e)}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+        return {"status": "error", "error": str(e)}
 
 if __name__ == "__main__":
-    # Test block
-    test_path = "uploads/sample_rate_card.pdf" # Make sure this exists if testing locally
-    if os.path.exists(test_path):
-        result = extraction_agent(test_path)
-        print(json.dumps(result, indent=2))
+    print("🕵️‍♂️ Universal Extraction Agent Ready.")

@@ -5,3 +5,5 @@ dist
 uploads
 .DS_Store
 *.pdf
+__pycache__/
+data/
