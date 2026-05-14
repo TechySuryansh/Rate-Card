@@ -113,7 +113,7 @@ def main():
         with left_col:
             st.subheader("📁 Upload Carrier Rate Card")
             with st.container():
-                uploaded_file = st.file_uploader("", type=['pdf'], help="Drop your carrier PDF here.")
+                uploaded_file = st.file_uploader("", type=['pdf', 'csv'], help="Drop your carrier PDF or CSV here.")
                 
                 if uploaded_file:
                     st.success(f"📦 Document Received: **{uploaded_file.name}**")
@@ -127,13 +127,18 @@ def main():
                             # 0. Save the file first
                             saved_path = save_uploaded_file(uploaded_file)
                             
-                            # 1. Extraction
-                            st.write("🕵️‍♂️ Extraction Agent: Parsing PDF tables...")
-                            extract_result = extraction_agent(saved_path)
-                            if extract_result['status'] != "success":
-                                st.error(f"Extraction Failed: {extract_result.get('error')}")
-                                st.stop()
-                            st.success(f"Extracted {extract_result.get('total_rows', 0)} lanes.")
+                            # 1. Extraction (or Direct Read if CSV)
+                            st.write("🕵️‍♂️ Extraction Agent: Processing data...")
+                            if uploaded_file.name.endswith('.csv'):
+                                # If CSV, use the saved path directly as extraction output
+                                extract_result = {"status": "success", "extraction_path": saved_path, "total_rows": "N/A (CSV)"}
+                                st.success("CSV detected: Bypassing PDF extraction.")
+                            else:
+                                extract_result = extraction_agent(saved_path)
+                                if extract_result['status'] != "success":
+                                    st.error(f"Extraction Failed: {extract_result.get('error')}")
+                                    st.stop()
+                                st.success(f"Extracted {extract_result.get('total_rows', 0)} lanes.")
                             
                             # 2. Validation
                             st.write("🛡️ Validation Agent: Checking for anomalies...")
