@@ -1,20 +1,12 @@
 services:
   - type: web
-    name: rate-card-api
-    runtime: node
+    name: rate-card-ai
+    runtime: python
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
+    buildCommand: pip install -r v2_intelligence_pipeline/requirements.txt
+    startCommand: streamlit run v2_intelligence_pipeline/app.py --server.port $PORT
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 10000
       - key: GROQ_API_KEY
         sync: false
-      - key: MONGODB_URI
+      - key: OPENAI_API_KEY
         sync: false
-      - key: MONGODB_DB_NAME
-        value: ratecard_workflow
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "true"
