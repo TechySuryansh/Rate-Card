@@ -1,0 +1,5 @@
+Lane,Mode,Base Rate,Fuel Surcharge,Transit Days,
+Delhi fi Mumbai,Road,USD 12000,8%,3,Express
+Chennai fi Bangalore,Road,6500,5%,1,Express
+Kolkata fi Pune,Rail,USD 15000,10%,4,Standard
+Hyderabad fi Ahmedabad,Air,USD 30000,15%,1,Standard

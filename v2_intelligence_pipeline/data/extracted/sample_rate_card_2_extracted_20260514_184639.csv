@@ -1,0 +1,5 @@
+Lane,Mode,Base Rate,Fuel Surcharge,Transit Days,
+Delhi fi Mumbai,Road,12000,8%,3,
+Chennai fi Bangalore,Road,6500,5%,1,
+Kolkata fi Pune,Rail,15000,10%,4,
+Hyderabad fi Ahmedabad,Air,30000,15%,1,Fragile

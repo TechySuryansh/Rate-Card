@@ -1,0 +1,35 @@
+origin,destination,carrier,current_rate,currency,effective_date,lane,mode,rate,fuel surcharge,transit days,unnamed: 5,is_new_lane,is_removed_lane,rate_diff,percent_change,change_type
+"Antwerp, BE","Tokyo, JP",SkyHigh Air,3463.1,USD,2026-04-23,,,,,,,False,True,,,Removed Lane
+Chennai,Bangalore,,,,,Chennai fi Bangalore,Road,6500.0,5%,1.0,Express,True,False,,,New Lane
+Delhi,Mumbai,,,,,Delhi fi Mumbai,Road,,8%,3.0,Express,False,False,,,No Change
+"Dubai, AE","Jeddah, SA",SkyHigh Air,598.34,EUR,2025-11-19,,,,,,,False,True,,,Removed Lane
+"Dubai, AE","Mumbai, IN",Oceanic Logistics,2949.22,EUR,2025-11-18,,,,,,,False,True,,,Removed Lane
+"Dubai, AE","New York, US",Evergreen Marine,532.22,EUR,2026-01-30,,,,,,,False,True,,,Removed Lane
+"Dubai, AE","Santos, BR",DHL Global,1266.82,GBP,2025-12-23,,,,,,,False,True,,,Removed Lane
+"Dubai, AE","Santos, BR",SkyHigh Air,4805.8,EUR,2025-12-24,,,,,,,False,True,,,Removed Lane
+"Dubai, AE","Santos, BR",Maersk Line,2050.55,USD,2026-04-10,,,,,,,False,True,,,Removed Lane
+"Dubai, AE","Santos, BR",Global Freight Corp,1437.19,EUR,2025-11-24,,,,,,,False,True,,,Removed Lane
+"Dubai, AE","Tokyo, JP",Maersk Line,809.26,GBP,2026-04-03,,,,,,,False,True,,,Removed Lane
+"Hamburg, DE","Marseille, FR",Maersk Line,3481.27,GBP,2025-12-29,,,,,,,False,True,,,Removed Lane
+"Hamburg, DE","New York, US",Oceanic Logistics,1845.22,USD,2026-01-07,,,,,,,False,True,,,Removed Lane
+"Hamburg, DE","Santos, BR",Global Freight Corp,880.13,EUR,2026-03-07,,,,,,,False,True,,,Removed Lane
+"Hamburg, DE","Santos, BR",Evergreen Marine,2947.0,EUR,2026-04-11,,,,,,,False,True,,,Removed Lane
+Hyderabad,Ahmedabad,,,,,Hyderabad fi Ahmedabad,Air,,15%,1.0,Standard,False,False,,,No Change
+Kolkata,Pune,,,,,Kolkata fi Pune,Rail,,10%,4.0,Standard,False,False,,,No Change
+"Los Angeles, US","Marseille, FR",Global Freight Corp,734.64,USD,2025-12-27,,,,,,,False,True,,,Removed Lane
+"Los Angeles, US","Mumbai, IN",Oceanic Logistics,3098.8,USD,2026-04-20,,,,,,,False,True,,,Removed Lane
+"Los Angeles, US","Sydney, AU",Maersk Line,4410.15,USD,2025-12-23,,,,,,,False,True,,,Removed Lane
+"Ningbo, CN","Sydney, AU",Maersk Line,3393.37,EUR,2026-03-14,,,,,,,False,True,,,Removed Lane
+"Ningbo, CN","Sydney, AU",DHL Global,2457.06,USD,2026-04-23,,,,,,,False,True,,,Removed Lane
+"Ningbo, CN","Tokyo, JP",Maersk Line,1140.86,GBP,2026-04-28,,,,,,,False,True,,,Removed Lane
+"Rotterdam, NL","Jeddah, SA",DHL Global,1840.98,GBP,2026-01-13,,,,,,,False,True,,,Removed Lane
+"Rotterdam, NL","Marseille, FR",Maersk Line,3124.55,EUR,2026-02-03,,,,,,,False,True,,,Removed Lane
+"Rotterdam, NL","Marseille, FR",Global Freight Corp,1534.19,EUR,2025-11-15,,,,,,,False,True,,,Removed Lane
+"Rotterdam, NL","Mumbai, IN",Evergreen Marine,1485.79,GBP,2026-02-04,,,,,,,False,True,,,Removed Lane
+"Rotterdam, NL","Mumbai, IN",Maersk Line,4562.84,EUR,2025-12-11,,,,,,,False,True,,,Removed Lane
+"Rotterdam, NL","New York, US",Maersk Line,4343.68,USD,2025-11-27,,,,,,,False,True,,,Removed Lane
+"Shanghai, CN","New York, US",Oceanic Logistics,2602.19,GBP,2025-12-26,,,,,,,False,True,,,Removed Lane
+"Singapore, SG","London, UK",Oceanic Logistics,1542.8,GBP,2026-03-25,,,,,,,False,True,,,Removed Lane
+"Singapore, SG","Mumbai, IN",Evergreen Marine,2873.25,USD,2026-01-19,,,,,,,False,True,,,Removed Lane
+"Singapore, SG","Mumbai, IN",DHL Global,4111.55,USD,2026-02-21,,,,,,,False,True,,,Removed Lane
+"Singapore, SG","Tokyo, JP",Global Freight Corp,1698.21,GBP,2026-03-22,,,,,,,False,True,,,Removed Lane

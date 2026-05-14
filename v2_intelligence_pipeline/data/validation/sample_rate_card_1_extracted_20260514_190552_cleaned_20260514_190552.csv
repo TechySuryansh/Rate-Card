@@ -1,0 +1,5 @@
+lane,Mode,rate,Fuel Surcharge,Transit Days,Unnamed: 5,origin,destination
+Delhi fi Mumbai,Road,,8%,3,Express,Delhi,Mumbai
+Chennai fi Bangalore,Road,6500.0,5%,1,Express,Chennai,Bangalore
+Kolkata fi Pune,Rail,,10%,4,Standard,Kolkata,Pune
+Hyderabad fi Ahmedabad,Air,,15%,1,Standard,Hyderabad,Ahmedabad

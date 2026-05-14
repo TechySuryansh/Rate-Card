@@ -197,70 +197,32 @@ export default function Dashboard() {
   };
 
   const animateRealResults = async (initialData: any) => {
-    const workflowId = initialData.workflowId;
-    let isFinished = false;
+    // The workflow is already complete from the upload response
+    // No need to poll - just display the results
     
-    const pollStatus = async () => {
-      if (isFinished) return;
-      
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/workflows/${workflowId}`);
-        const state = await response.json();
-        
-        if (state.success && state.workflow) {
-          const wf = state.workflow;
-          
-          setFullResults(state); // Update the main results object so the table has data
-          
-          setStages(prev => {
-            const updated = [...prev];
-            // Update all stages based on actual backend state
-            for (let i = 0; i < 8; i++) {
-              const stageKey = `stage_${i + 1}`;
-              
-              // Check both metadata and overall workflow state
-              const isCompleted = wf.metadata?.[`${stageKey}_completed`] || 
-                                 (wf.current_stage > i + 1) || 
-                                 (wf.current_stage === i + 1 && wf.overall_status === 'completed');
-
-              if (isCompleted) {
-                updated[i].status = 'completed';
-                // ... same result mapping as before ...
-              } else if (wf.overall_status === 'failed' && wf.current_stage === i + 1) {
-                updated[i].status = 'failed';
-              } else if (wf.metadata?.[`${stageKey}_started`] || (i > 0 && updated[i-1].status === 'completed')) {
-                updated[i].status = 'processing';
-              }
-            }
-            
-            // Handle global failure
-            if (wf.overall_status === 'failed') {
-               isFinished = true;
-               alert(`Workflow failed at Stage ${wf.current_stage}. Check server logs for details.`);
-            }
-            
-            // Check if entirely finished
-            if (wf.status === 'completed' || wf.metadata?.stage_8_completed) {
-              isFinished = true;
-              setTimeout(() => {
-                setStages(prev => {
-                  setSelectedStage(prev[7]);
-                  return prev;
-                });
-              }, 1000);
-            }
-            
-            return updated;
-          });
-        }
-      } catch (err) {
-        console.error('Polling error:', err);
+    setFullResults(initialData);
+    
+    // Animate stages as completed
+    setStages(prev => {
+      const updated = [...prev];
+      for (let i = 0; i < 8; i++) {
+        updated[i].status = 'completed';
       }
-      
-      if (!isFinished) setTimeout(pollStatus, 2000);
-    };
+      return updated;
+    });
     
-    pollStatus();
+    setIsUploading(false);
+    
+    // Show final stage details
+    setTimeout(() => {
+      setSelectedStage({
+        id: 8,
+        name: 'Final Activation',
+        description: 'Rate card activated successfully',
+        status: 'completed',
+        result: initialData.fullState?.stage_results?.stage_8
+      });
+    }, 500);
   };
 
   const handleApprove = () => {

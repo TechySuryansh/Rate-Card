@@ -17,7 +17,17 @@ const port = process.env.PORT || 4001;
 const workflowCache = new Map<string, WorkflowState>();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:4001',
+    'https://rate-card-vko6.onrender.com',
+    process.env.FRONTEND_URL || 'http://localhost:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 // Request Logger
@@ -72,6 +82,10 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       industry: 'Logistics',
       rateRangeMin: 0,
       rateRangeMax: 10000,
+      escalationContact: 'manager@company.com',
+      carrierEmail: 'rates@carrier.com',
+      communicationStyle: 'professional',
+      changeReason: 'Rate card update',
       validationRules: {
         requireOrigins: true,
         requireDestinations: true,
@@ -138,7 +152,9 @@ app.get('/api/export/:workflowId', async (req, res) => {
     
     // Poll for completion (max 30 seconds for complex PDFs)
     let state: WorkflowState | null = null;
-    for (let i = 0; i < 30; i++) {
+    const maxAttempts = 30;
+    
+    for (let i = 0; i < maxAttempts; i++) {
       // Always fetch fresh from the most reliable source
       state = await mongoGetWorkflow(workflowId);
       
@@ -151,14 +167,24 @@ app.get('/api/export/:workflowId', async (req, res) => {
         break;
       }
       
+      // If this is the last attempt, return error
+      if (i === maxAttempts - 1) {
+        return res.status(202).json({ 
+          error: 'AI is still structuring your data. Please wait 10 seconds and try again.',
+          status: 'processing',
+          workflowId
+        });
+      }
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
-      if (i % 5 === 0) console.log(`⏳ Waiting for AI data for workflow ${workflowId}... (${i+1}/30)`);
+      if (i % 5 === 0) console.log(`⏳ Waiting for AI data for workflow ${workflowId}... (${i+1}/${maxAttempts})`);
     }
 
     if (!state?.stage_results?.stage_3?.transformed_data) {
       return res.status(202).json({ 
         error: 'AI is still structuring your data. Please wait 10 seconds and try again.',
-        status: 'processing'
+        status: 'processing',
+        workflowId
       });
     }
 

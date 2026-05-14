@@ -1,0 +1,13 @@
+langgraph
+langchain
+langchain-openai
+streamlit
+python-dotenv
+pandas
+pydantic
+openai
+pytest
+pdfplumber
+graphviz
+plotly
+groq

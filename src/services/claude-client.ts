@@ -179,14 +179,6 @@ export async function callClaude(options: LLMCallOptions): Promise<LLMResponse> 
       });
 
       try {
-        const groq = getClient();
-
-        logger.debug(`Calling Groq for Stage ${stageNumber}`, {
-          stage: stageNumber,
-          action: 'api_call',
-          data: { model: stageConfig.model, temperature: stageConfig.temperature, maxTokens: stageConfig.maxTokens },
-        });
-
         const finalSystemPrompt = systemPrompt.toLowerCase().includes('json')
           ? systemPrompt
           : `${systemPrompt}\n\nIMPORTANT: You must return the output as a valid JSON object.`;

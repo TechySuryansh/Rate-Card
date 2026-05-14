@@ -1,0 +1,11 @@
+{
+  "status": "success",
+  "total_rows": 4,
+  "total_issues": 0,
+  "missing_values": 0,
+  "duplicates": 0,
+  "corrections": [
+    "Split 'Lane' column into 'origin' and 'destination'"
+  ],
+  "timestamp": "2026-05-14T19:05:52.456620"
+}

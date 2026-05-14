@@ -1,0 +1,45 @@
+{
+  "financial_metrics": {
+    "total_projected_delta": 0.0,
+    "avg_percentage_change": NaN,
+    "high_risk_lane_count": 0
+  },
+  "risk_analysis": {
+    "high_risk_lanes": [],
+    "impact_level": "Low"
+  },
+  "carrier_impact": [
+    {
+      "carrier": "DHL Global",
+      "percent_change": NaN,
+      "rate_diff": 0.0
+    },
+    {
+      "carrier": "Evergreen Marine",
+      "percent_change": NaN,
+      "rate_diff": 0.0
+    },
+    {
+      "carrier": "Global Freight Corp",
+      "percent_change": NaN,
+      "rate_diff": 0.0
+    },
+    {
+      "carrier": "Maersk Line",
+      "percent_change": NaN,
+      "rate_diff": 0.0
+    },
+    {
+      "carrier": "Oceanic Logistics",
+      "percent_change": NaN,
+      "rate_diff": 0.0
+    },
+    {
+      "carrier": "SkyHigh Air",
+      "percent_change": NaN,
+      "rate_diff": 0.0
+    }
+  ],
+  "executive_summary": "Projected cost change is $0.0. There are 0 high-risk lanes requiring immediate review. Recommendations: Re-negotiate top increases and audit carrier performance.",
+  "timestamp": "2026-05-14T18:49:49.704429"
+}

@@ -1,0 +1,10 @@
+{
+  "status": "pass_with_warnings",
+  "total_records": 4,
+  "issues_count": 1,
+  "issues": [
+    "Found 3 missing values across the dataset."
+  ],
+  "corrections": [],
+  "timestamp": "2026-05-14T18:48:46.128037"
+}
