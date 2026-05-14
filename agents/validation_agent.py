@@ -34,18 +34,24 @@ def validation_agent(extracted_csv_path: str):
             'dest': 'destination',
             'ratte': 'rate',
             'base rate': 'rate',
+            'frt': 'rate',
             'curr': 'currency'
         }
         
-        original_cols = list(df.columns)
+        # Clean columns: Strip spaces and lowercase for mapping
+        original_cols = [c.strip() for c in df.columns]
         new_cols = [header_map.get(col.lower(), col) for col in original_cols]
         df.columns = new_cols
         
         # NEW: Handle 'Lane' column if origin/destination are missing
         if 'lane' in df.columns and ('origin' not in df.columns or 'destination' not in df.columns):
             print("💡 Found 'Lane' column, splitting into origin/destination...")
-            # Split "Origin -> Destination", "Origin - Destination", or the artifact "Origin fi Destination"
-            split_data = df['lane'].str.split(r' \-\> | \- | to | fi | \/ ', expand=True)
+            # More robust splitting (case insensitive, handles various separators and spaces)
+            # Separators: ->, -, to, fi, /, |, via
+            import re
+            split_regex = r'\s*(?i:->|-|to|fi|\/|\||via)\s*'
+            split_data = df['lane'].str.split(split_regex, expand=True, regex=True)
+            
             if split_data.shape[1] >= 2:
                 df['origin'] = split_data[0].str.strip()
                 df['destination'] = split_data[1].str.strip()
@@ -54,6 +60,7 @@ def validation_agent(extracted_csv_path: str):
                 # Fallback: Just use the lane as origin if split fails
                 df['origin'] = df['lane']
                 df['destination'] = "Unknown"
+                print(f"⚠️ Failed to split Lane: '{df['lane'].iloc[0]}'")
 
         # 2. Validate Missing Values
         missing_count = df.isnull().sum().sum()

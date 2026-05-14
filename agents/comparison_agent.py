@@ -30,8 +30,16 @@ def comparison_agent(cleaned_csv_path: str, active_rates_path: str = "data/activ
         new_df.columns = [c.lower() for c in new_df.columns]
         active_df.columns = [c.lower() for c in active_df.columns]
         
+        print(f"📊 New Data Columns: {list(new_df.columns)}")
+        print(f"📊 Active Data Columns: {list(active_df.columns)}")
+        
+        # Check for mandatory columns
+        required = ['origin', 'destination']
+        missing = [col for col in required if col not in new_df.columns]
+        if missing:
+            return {"status": "error", "error": f"Missing columns in new data: {missing}. Found: {list(new_df.columns)}"}
+
         # Merge datasets on Origin and Destination to find matches
-        # We use an outer merge to catch new and removed lanes
         merged = pd.merge(
             active_df, 
             new_df, 
